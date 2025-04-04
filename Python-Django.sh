@@ -26,27 +26,60 @@ if [ ! -f "devbox.json" ]; then
     
     # 添加常用工具和 Python 依赖
     devbox add python@3.11 nodejs@18 git
+
+    # 更新devbox.json以自动激活虚拟环境
+    cat > devbox.json << EOL
+{
+  "packages": [
+    "python@3.11",
+    "nodejs@18",
+    "git"
+  ],
+  "shell": {
+    "init_hook": [
+      ". \$VENV_DIR/bin/activate",
+      "pip install django",
+      "pip install djangorestframework"
+    ]
+  }
+}
+EOL
 fi
 
-# 创建初始化Django的脚本
-cat > init_django.sh << EOL
+# 创建启动Django的脚本
+cat > start_django.sh << EOL
 #!/bin/bash
-# 安装Django
-pip install django
+set -e  # 出错时停止执行
+
+# 确保虚拟环境被激活
+if [ -z "\$VIRTUAL_ENV" ]; then
+    echo "正在激活虚拟环境..."
+    . \$VENV_DIR/bin/activate
+fi
+
+# 确保Django已安装
+if ! python -c "import django" &>/dev/null; then
+    echo "正在安装Django..."
+    pip install django
+fi
 
 # 检查Django项目是否已存在
-if [ ! -d "myproject" ]; then
+if [ ! -f "manage.py" ]; then
     echo "创建新的Django项目..."
     django-admin startproject myproject .
     python manage.py startapp myapp
     
     # 创建一个简单的视图
+    mkdir -p myapp
     cat > myapp/views.py << EOF
 from django.http import HttpResponse
 
 def index(request):
     return HttpResponse("欢迎使用Django! 开发环境已成功设置。")
 EOF
+    
+    # 等待项目创建完成
+    sleep 2
     
     # 配置URL
     cat > myproject/urls.py << EOF
@@ -67,53 +100,34 @@ EOF
     python manage.py migrate
 fi
 
-# 启动Django服务器
+echo "启动Django服务器..."
 python manage.py runserver 0.0.0.0:8000
 EOL
 
 # 使脚本可执行
-chmod +x init_django.sh
+chmod +x start_django.sh
 
-# 修改devbox.json以自动执行初始化脚本
-cat > devbox.json << EOL
-{
-  "packages": [
-    "python@3.11",
-    "nodejs@18",
-    "git"
-  ],
-  "shell": {
-    "init_hook": [
-      "./init_django.sh"
-    ],
-    "scripts": {
-      "start": "./init_django.sh"
-    }
-  }
-}
-EOL
-
-# 创建启动脚本，可以在外部直接调用
+# 创建运行脚本
 cat > run_django.sh << EOL
 #!/bin/bash
 cd $PROJECT_DIR
-devbox run start
+CURRENT_SHELL=\$SHELL
+devbox run --pure bash -c "./start_django.sh"
 EOL
 chmod +x run_django.sh
 
-# 提供指南并自动启动
+# 提供指南
 echo "✅ Django Devbox 环境已配置！"
 echo ""
-echo "现在将启动Django服务器..."
-echo "Django 服务器将运行在: http://localhost:8000"
+echo "运行Django的方法："
+echo "1. 进入项目目录后直接运行："
+echo "   cd $PROJECT_DIR && devbox run --pure bash -c './start_django.sh'"
 echo ""
-echo "以后想要再次启动，只需运行:"
-echo "$PROJECT_DIR/run_django.sh"
+echo "2. 或使用快捷脚本："
+echo "   $PROJECT_DIR/run_django.sh"
 echo ""
-echo "或者在项目目录中运行:"
-echo "cd $PROJECT_DIR && devbox shell"
-echo ""
+echo "现在尝试启动Django服务器..."
 
-# 自动启动devbox并运行Django
+# 尝试启动，确保使用--pure标志创建干净的环境
 cd $PROJECT_DIR
-devbox shell
+devbox run --pure bash -c './start_django.sh'
