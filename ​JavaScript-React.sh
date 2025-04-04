@@ -15,7 +15,7 @@ if ! command -v devbox &> /dev/null; then
 fi
 
 # 初始化项目目录
-PROJECT_DIR=~/devbox-projectss/react-project
+PROJECT_DIR=~/devbox-projects/react-project
 mkdir -p $PROJECT_DIR
 cd $PROJECT_DIR
 
@@ -25,24 +25,21 @@ if [ ! -f "devbox.json" ]; then
     devbox init
     
     # 添加常用工具和 Node.js 依赖
-    devbox add nodejs@18 git
+    devbox add nodejs@20 git
 
     # 更新devbox.json以添加自定义启动命令
     cat > devbox.json << 'EOL'
 {
   "packages": [
-    "nodejs@18",
+    "nodejs@20",
     "git"
   ],
   "shell": {
-    "init_hook": [
-      "npm install -g create-react-app",
-      "npm install -g serve"
-    ],
+    "init_hook": [],
     "scripts": {
       "start": "./start_react.sh",
       "build": "cd react-app && npm run build",
-      "serve": "cd react-app && serve -s build"
+      "serve": "cd react-app && npx serve -s build"
     }
   }
 }
@@ -57,6 +54,7 @@ set -e  # 出错时停止执行
 # 检查React项目是否已存在
 if [ ! -d "react-app" ]; then
     echo "创建新的React项目..."
+    # 使用npx而不是全局安装
     npx create-react-app react-app
     
     # 进入项目目录
@@ -212,7 +210,7 @@ chmod +x build_react.sh
 cat > serve_build.sh << 'EOL'
 #!/bin/bash
 cd "$PROJECT_DIR"
-devbox run --pure bash -c "cd react-app && serve -s build"
+devbox run --pure bash -c "cd react-app && npx serve -s build"
 EOL
 sed -i "s|\$PROJECT_DIR|$PROJECT_DIR|g" serve_build.sh
 chmod +x serve_build.sh
