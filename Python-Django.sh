@@ -100,6 +100,18 @@ EOF
     python manage.py migrate
 fi
 
+# 检查是否已创建超级用户
+if ! python manage.py shell -c "from django.contrib.auth import get_user_model; print(get_user_model().objects.filter(is_superuser=True).exists())" | grep -q "True"; then
+    echo "创建超级用户admin (密码: admin123)..."
+    python manage.py shell -c "
+from django.contrib.auth import get_user_model;
+User = get_user_model();
+if not User.objects.filter(username='admin').exists():
+    User.objects.create_superuser('admin', 'admin@example.com', 'admin123')
+"
+    echo "超级用户已创建! 用户名: admin, 密码: admin123"
+fi
+
 echo "启动Django服务器..."
 python manage.py runserver 0.0.0.0:8000
 EOL
