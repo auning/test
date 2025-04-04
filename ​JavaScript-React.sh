@@ -25,7 +25,7 @@ if [ ! -f "devbox.json" ]; then
     devbox init
     
     # 添加常用工具和 Node.js 依赖
-    devbox add nodejs@20 git
+    devbox add nodejs@18 git
 
     # 更新devbox.json以添加自定义启动命令
     cat > devbox.json << 'EOL'
