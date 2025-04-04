@@ -28,7 +28,7 @@ if [ ! -f "devbox.json" ]; then
     devbox add python@3.11 nodejs@18 git
 
     # 更新devbox.json以自动激活虚拟环境
-    cat > devbox.json << EOL
+    cat > devbox.json << 'EOL'
 {
   "packages": [
     "python@3.11",
@@ -37,7 +37,7 @@ if [ ! -f "devbox.json" ]; then
   ],
   "shell": {
     "init_hook": [
-      ". \$VENV_DIR/bin/activate",
+      ". $VENV_DIR/bin/activate",
       "pip install django",
       "pip install djangorestframework"
     ]
@@ -47,14 +47,14 @@ EOL
 fi
 
 # 创建启动Django的脚本
-cat > start_django.sh << EOL
+cat > start_django.sh << 'EOL'
 #!/bin/bash
 set -e  # 出错时停止执行
 
 # 确保虚拟环境被激活
-if [ -z "\$VIRTUAL_ENV" ]; then
+if [ -z "$VIRTUAL_ENV" ]; then
     echo "正在激活虚拟环境..."
-    . \$VENV_DIR/bin/activate
+    . $VENV_DIR/bin/activate
 fi
 
 # 确保Django已安装
@@ -117,16 +117,26 @@ EOL
 chmod +x start_django.sh
 
 # 创建运行脚本
-cat > run_django.sh << EOL
+cat > run_django.sh << 'EOL'
 #!/bin/bash
-cd $PROJECT_DIR
-CURRENT_SHELL=\$SHELL
+cd "$PROJECT_DIR"
 devbox run --pure bash -c "./start_django.sh"
 EOL
+sed -i "s|\$PROJECT_DIR|$PROJECT_DIR|g" run_django.sh
 chmod +x run_django.sh
 
 # 提供指南
 echo "✅ Django Devbox 环境已配置！"
 echo ""
 echo "运行Django的方法："
-echo "1
+echo "1. 进入项目目录后直接运行："
+echo "   cd $PROJECT_DIR && devbox run --pure bash -c './start_django.sh'"
+echo ""
+echo "2. 或使用快捷脚本："
+echo "   $PROJECT_DIR/run_django.sh"
+echo ""
+echo "现在尝试启动Django服务器..."
+
+# 尝试启动
+cd $PROJECT_DIR
+devbox run --pure bash -c './start_django.sh'
