@@ -99,15 +99,14 @@ EOF
     # 初始化数据库
     python manage.py migrate
     
-    # 创建超级用户
+    # 创建超级用户 - 使用环境变量非交互方式
     echo "创建超级用户admin (密码: admin123)..."
-    python -c "
-from django.contrib.auth import get_user_model
-User = get_user_model()
-if not User.objects.filter(username='admin').exists():
-    User.objects.create_superuser('admin', 'admin@example.com', 'admin123')
-    print('超级用户已创建! 用户名: admin, 密码: admin123')
-"
+    DJANGO_SUPERUSER_USERNAME=admin \
+    DJANGO_SUPERUSER_EMAIL=admin@example.com \
+    DJANGO_SUPERUSER_PASSWORD=admin123 \
+    python manage.py createsuperuser --noinput
+    
+    echo "超级用户已创建! 用户名: admin, 密码: admin123"
 fi
 
 echo "启动Django服务器..."
@@ -130,14 +129,4 @@ chmod +x run_django.sh
 echo "✅ Django Devbox 环境已配置！"
 echo ""
 echo "运行Django的方法："
-echo "1. 进入项目目录后直接运行："
-echo "   cd $PROJECT_DIR && devbox run --pure bash -c './start_django.sh'"
-echo ""
-echo "2. 或使用快捷脚本："
-echo "   $PROJECT_DIR/run_django.sh"
-echo ""
-echo "现在尝试启动Django服务器..."
-
-# 尝试启动，确保使用--pure标志创建干净的环境
-cd $PROJECT_DIR
-devbox run --pure bash -c './start_django.sh'
+echo "1
