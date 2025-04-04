@@ -16,31 +16,24 @@ fi
 
 # 初始化项目目录
 PROJECT_DIR=~/devbox-projects/django-project
-mkdir -p $PROJECT_DIR && cd $PROJECT_DIR
-devbox init
+mkdir -p $PROJECT_DIR
+cd $PROJECT_DIR
 
-# 添加常用工具和 Python 依赖
-devbox add python@3.11 nodejs@18 git
+# 初始化devbox项目
+if [ ! -f "devbox.json" ]; then
+    echo "初始化Devbox项目..."
+    devbox init
+    
+    # 添加常用工具和 Python 依赖
+    devbox add python@3.11 nodejs@18 git
+fi
 
-# 创建 devbox.json 配置文件，添加 Django 依赖
-cat > devbox.json << EOL
-{
-  "packages": [
-    "python@3.11",
-    "nodejs@18",
-    "git"
-  ],
-  "shell": {
-    "init_hook": [
-      "pip install django"
-    ]
-  }
-}
-EOL
-
-# 创建自动启动Django项目的脚本
-cat > setup_django.sh << EOL
+# 创建初始化Django的脚本
+cat > init_django.sh << EOL
 #!/bin/bash
+# 安装Django
+pip install django
+
 # 检查Django项目是否已存在
 if [ ! -d "myproject" ]; then
     echo "创建新的Django项目..."
@@ -79,25 +72,48 @@ python manage.py runserver 0.0.0.0:8000
 EOL
 
 # 使脚本可执行
-chmod +x setup_django.sh
+chmod +x init_django.sh
 
-# 创建自定义启动命令
-mkdir -p .devbox/hooks
-cat > .devbox/hooks/start.sh << EOL
+# 修改devbox.json以自动执行初始化脚本
+cat > devbox.json << EOL
+{
+  "packages": [
+    "python@3.11",
+    "nodejs@18",
+    "git"
+  ],
+  "shell": {
+    "init_hook": [
+      "./init_django.sh"
+    ],
+    "scripts": {
+      "start": "./init_django.sh"
+    }
+  }
+}
+EOL
+
+# 创建启动脚本，可以在外部直接调用
+cat > run_django.sh << EOL
 #!/bin/bash
 cd $PROJECT_DIR
-./setup_django.sh
+devbox run start
 EOL
-chmod +x .devbox/hooks/start.sh
+chmod +x run_django.sh
 
-# 生成启动命令指南
-echo "✅ Django Devbox 环境已配置！执行以下命令："
+# 提供指南并自动启动
+echo "✅ Django Devbox 环境已配置！"
+echo ""
+echo "现在将启动Django服务器..."
+echo "Django 服务器将运行在: http://localhost:8000"
+echo ""
+echo "以后想要再次启动，只需运行:"
+echo "$PROJECT_DIR/run_django.sh"
+echo ""
+echo "或者在项目目录中运行:"
 echo "cd $PROJECT_DIR && devbox shell"
 echo ""
-echo "进入 devbox shell 后，执行以下命令启动 Django："
-echo "./setup_django.sh"
-echo ""
-echo "或者使用快捷命令启动："
-echo "devbox run start"
-echo ""
-echo "Django 服务器将运行在: http://localhost:8000"
+
+# 自动启动devbox并运行Django
+cd $PROJECT_DIR
+devbox shell
