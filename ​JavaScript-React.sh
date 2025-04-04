@@ -31,7 +31,7 @@ if [ ! -f "devbox.json" ]; then
     cat > devbox.json << 'EOL'
 {
   "packages": [
-    "nodejs@20",
+    "nodejs@18",
     "git"
   ],
   "shell": {
