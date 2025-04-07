@@ -15,7 +15,7 @@ if ! command -v devbox &> /dev/null; then
 fi
 
 # 初始化项目目录
-PROJECT_DIR=~/devbox-projects1/react-project
+PROJECT_DIR=~/devbox-projects/react-project
 mkdir -p $PROJECT_DIR
 cd $PROJECT_DIR
 
